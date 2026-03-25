@@ -1,0 +1,300 @@
+
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0;}
+  .wrap { padding: 1rem 0; font-size: 13px; }
+  
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .filter-btn { padding: 5px 14px; border-radius: 20px; border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-secondary); font-size: 12px; cursor: pointer; transition: all .15s; font-family: inherit; }
+  .filter-btn:hover { background: var(--color-background-secondary); }
+  .filter-btn.active { background: var(--color-background-info); color: var(--color-text-info); border-color: var(--color-border-info); }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border-bottom: 0.5px solid var(--color-border-tertiary); padding: 0; vertical-align: top; }
+  thead th { padding: 10px 12px; font-weight: 500; font-size: 12px; color: var(--color-text-secondary); background: var(--color-background-secondary); position: sticky; top: 0; z-index: 2; }
+  .col-cat { width: 16%; }
+  .col-feat { width: 22%; }
+  .col-co { width: 20%; background: rgba(29,158,117,0.05); }
+  .col-vx { width: 20%; }
+  .col-2c { width: 20%; }
+
+  .section-row td { background: var(--color-background-tertiary); padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 0.5px solid var(--color-border-secondary); }
+  .data-row { cursor: pointer; }
+  .data-row:hover td { background: var(--color-background-secondary); }
+  .data-row.hidden { display: none; }
+
+  .feat-cell { padding: 10px 12px; color: var(--color-text-primary); font-weight: 500; font-size: 12px; line-height: 1.4; }
+  .val-cell { padding: 8px 12px; font-size: 12px; line-height: 1.5; color: var(--color-text-secondary); }
+  .val-cell.winner { background: rgba(29,158,117,0.04); }
+  .cat-cell { padding: 10px 12px; font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); }
+
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; margin-bottom: 2px; }
+  .chip-yes  { background: #EAF3DE; color: #3B6D11; }
+  .chip-no   { background: #FCEBEB; color: #A32D2D; }
+  .chip-par  { background: #FAEEDA; color: #854F0B; }
+  .chip-na   { background: var(--color-background-secondary); color: var(--color-text-tertiary); }
+  @media (prefers-color-scheme: dark) {
+    .chip-yes { background: #27500A; color: #C0DD97; }
+    .chip-no  { background: #791F1F; color: #F7C1C1; }
+    .chip-par { background: #633806; color: #FAC775; }
+  }
+
+  .expand-row { display: none; }
+  .expand-row td { padding: 0 12px 12px 12px; font-size: 12px; line-height: 1.6; color: var(--color-text-secondary); }
+  .expand-row.open { display: table-row; }
+  .expand-inner { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding-top: 8px; border-top: 0.5px solid var(--color-border-tertiary); }
+  .expand-col { font-size: 12px; line-height: 1.5; }
+  .expand-col strong { display: block; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; font-size: 11px; }
+
+  .legend { display: flex; gap: 16px; margin-bottom: 14px; font-size: 12px; color: var(--color-text-secondary); flex-wrap: wrap; align-items: center; }
+  .leg-item { display: flex; align-items: center; gap: 5px; }
+  .leg-sq { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  
+  .hint { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 12px; }
+  .arrow { font-size: 10px; color: var(--color-text-tertiary); float: right; transition: transform .2s; }
+  .arrow.open { transform: rotate(90deg); }
+</style>
+
+<div class="wrap">
+  <div class="legend">
+    <span class="leg-item"><span class="leg-sq" style="background:#C0DD97;"></span> Incluido / Cumple</span>
+    <span class="leg-item"><span class="leg-sq" style="background:#FAC775;"></span> Parcial / Condicional</span>
+    <span class="leg-item"><span class="leg-sq" style="background:#F7C1C1;"></span> No incluido / No acreditado</span>
+    <span style="margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;"><span style="width:10px;height:10px;border-radius:2px;background:rgba(29,158,117,0.15);border:1px solid #9FE1CB;display:inline-block;"></span> Postor recomendado</span>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterCat('all')">Todos</button>
+    <button class="filter-btn" onclick="filterCat('empresa')">Empresa</button>
+    <button class="filter-btn" onclick="filterCat('arquitectura')">Arquitectura</button>
+    <button class="filter-btn" onclick="filterCat('seguridad')">Seguridad</button>
+    <button class="filter-btn" onclick="filterCat('etica')">Ethical Hacking</button>
+    <button class="filter-btn" onclick="filterCat('metodologia')">Metodología</button>
+    <button class="filter-btn" onclick="filterCat('equipo')">Equipo</button>
+    <button class="filter-btn" onclick="filterCat('soporte')">Soporte / SLA</button>
+    <button class="filter-btn" onclick="filterCat('economico')">Económico</button>
+  </div>
+
+  <p class="hint">Haz clic en una fila para ver el detalle comparativo</p>
+
+  <table id="comp-table">
+    <thead>
+      <tr>
+        <th class="col-cat">Categoría</th>
+        <th class="col-feat">Característica</th>
+        <th class="col-co">OM Technology ★</th>
+        <th class="col-vx">VALTX</th>
+        <th class="col-2c">2Cloud</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+    </tbody>
+  </table>
+</div>
+
+<script>
+const YES = (t) => `<span class="chip chip-yes">✓ ${t}</span>`;
+const NO  = (t) => `<span class="chip chip-no">✗ ${t}</span>`;
+const PAR = (t) => `<span class="chip chip-par">~ ${t}</span>`;
+const NA  = (t) => `<span class="chip chip-na">— ${t}</span>`;
+
+const rows = [
+  // EMPRESA
+  { section: 'Perfil de la empresa', cat: 'empresa' },
+  { feat:'Años de experiencia', cat:'empresa',
+    om: YES('20+ años (grupo)'), vx: YES('24+ años'), c2: PAR('5+ años'),
+    om_d:'OM Technology Group fundado en 2014 en Costa Rica. Filial peruana constituida en abril 2022. Más de 20 años de experiencia del grupo en sectores regulados.', vx_d:'Gestión de Servicios Compartidos S.A.C. (VALTX) con más de 24 años de trayectoria en tecnología y BPO a nivel nacional.', c2_d:'2Cloud Peru S.A.C. constituida en 2021. Declara más de 5 años de experiencia en el mercado, aunque la empresa como entidad legal tiene menos de 5 años.' },
+  { feat:'Especialización sector financiero', cat:'empresa',
+    om: YES('Banca, seguros, AFP'), vx: YES('Banca, fintech, retail'), c2: PAR('Limitada'),
+    om_d:'Especialización declarada en sectores regulados: banca, seguros, AFP y fondos de inversión. Clientes activos: Pacifico Seguros, Pacifico Salud, Prima AFP, AFP Siembra, Banco Ademi, Seguros Universal, Total Finance, AFP APS.', vx_d:'Cartera financiera acreditada en Perú: Scotiabank, BBVA, Banco Falabella, Caja Huancayo, Financiera Confianza, Compartamos, Efectiva, Grupo Coril.', c2_d:'Experiencia financiera acreditada principalmente con BNP Paribas Cardif (migración web, seguridad, sistemas financieros). Cartera más limitada en entidades reguladas por SBS.' },
+  { feat:'Cobertura geográfica', cat:'empresa',
+    om: YES('14 países Latinoamérica'), vx: PAR('Nacional (Perú)'), c2: PAR('Nacional (Perú)'),
+    om_d:'Presencia activa en: Chile, Perú, Brasil, México, Guatemala, Honduras, El Salvador, Nicaragua, Panamá, Costa Rica, República Dominicana, Aruba, Colombia, San Kitts & Nevis.', vx_d:'Operación principal en Perú con capacidad de gestionar altos volúmenes operativos nacionales y regionales.', c2_d:'Domicilio legal en Chorrillos, Lima. Sede principal en San Isidro. Cobertura declarada nacional.' },
+  { feat:'Certificaciones corporativas', cat:'empresa',
+    om: PAR('Sin detalle en propuesta'), vx: YES('ISO 9001 / 14001 / 27001'), c2: PAR('Certificaciones individuales'),
+    om_d:'La propuesta técnica no detalla certificaciones corporativas ISO del grupo. Sin embargo, el especialista en ciberseguridad de 2Cloud presentó certificaciones ISO/IEC 27001 Lead Implementer y Auditor individuales.', vx_d:'VALTX mantiene certificaciones corporativas vigentes: ISO 9001 (Gestión de Calidad), ISO 14001 (Gestión Ambiental) e ISO/IEC 27001 (Seguridad de la Información), todas certificadas por AENOR.', c2_d:'No presenta certificaciones corporativas ISO. El especialista en ciberseguridad acredita certificaciones individuales: CISSP, CISO, NIST Cybersecurity Consultant, ISO/IEC 27001 Lead Implementer y Lead Auditor.' },
+  { feat:'Partnerships tecnológicos', cat:'empresa',
+    om: PAR('No detallados'), vx: YES('IBM, Microsoft Gold, AWS, Oracle, Fortinet'), c2: YES('Partner AWS'),
+    om_d:'La propuesta no detalla partnerships tecnológicos formales, aunque acredita uso de servicios AWS, GitHub, Docker y herramientas de la industria.', vx_d:'Partnerships formales vigentes: IBM, Hewlett Packard Enterprise, HPE Networking, Microsoft Gold Certified Partner, Oracle Partner, Lenovo, AWS, UiPath, Rocketbot, Fortinet, Bantotal, Park Place Technologies.', c2_d:'Partner oficial de Amazon Web Services (AWS). Especialista cloud con certificaciones AWS acreditadas.' },
+
+  // ARQUITECTURA
+  { section: 'Arquitectura técnica', cat: 'arquitectura' },
+  { feat:'Stack tecnológico CMS', cat:'arquitectura',
+    om: YES('Drupal 10/11 + NuxtJS 3'), vx: YES('Strapi + Angular 19'), c2: PAR('Laravel + Angular'),
+    om_d:'Backend: Drupal 10/11 (PHP 8.2+, Nginx) exponiendo JSON:API. Frontend: NuxtJS 3 (Vue.js, TypeScript, Tailwind CSS) con SSG — páginas pre-renderizadas en CDN con < 100ms de respuesta. Headless CMS con separación total frontend/backend.', vx_d:'CMS headless Strapi en NodeJS. Frontend: Angular 19 LTS (TypeScript, HTML5, CSS3). Backend: microservicios NodeJS + Express en AWS Fargate. Base de datos: PostgreSQL en Amazon RDS.', c2_d:'Frontend: Angular. Backend/CMS: Laravel. Base de datos: MariaDB en RDS. Arquitectura desacoplada pero más convencional. Menos alineada con paradigma headless puro exigido en el TDR.' },
+  { feat:'Infraestructura cloud AWS', cat:'arquitectura',
+    om: YES('AWS Organizations, 3 cuentas aisladas'), vx: YES('AWS Fargate, ECS, RDS'), c2: PAR('CloudFront, WAF, ALB, EC2, RDS'),
+    om_d:'AWS Organizations con 3 cuentas completamente aisladas: losandes-dev, losandes-staging, losandes-prod. VPC multi-AZ con 3 capas de subnets (pública, privada-app, privada-data). ECS Fargate, RDS MySQL Multi-AZ, ElastiCache Redis, S3+CloudFront, WAF en CloudFront Y en ALB, AWS Shield Standard/Advanced, Secrets Manager, CloudTrail, CloudWatch, AWS Config.', vx_d:'VPC dedicada con subredes públicas y privadas. Amazon ECS Fargate. Amazon RDS PostgreSQL Multi-AZ con backups automáticos. S3+CloudFront para FrontEnd. ALB + AWS WAF. AWS Cognito para federación de identidad. AWS Secrets Manager. CloudWatch, CloudTrail y AWS Config.', c2_d:'CloudFront, WAF, ALB, EC2 (no Fargate), RDS MariaDB, S3. Propuesta funcional pero sin el nivel de detalle en separación de ambientes ni AWS Organizations que presentan los otros postores.' },
+  { feat:'Separación de ambientes', cat:'arquitectura',
+    om: YES('Dev / Staging / Prod aislados (AWS Org)'), vx: PAR('Ambientes por configuración'), c2: PAR('No detallado'),
+    om_d:'AWS Organizations crea 3 cuentas AWS independientes. Un error o compromiso en dev no puede afectar producción. Pipelines CI/CD con IAM Roles cross-account con mínimos privilegios.', vx_d:'La propuesta menciona ambientes de Desarrollo, QA y Producción, pero sin el nivel de aislamiento de AWS Organizations. Cuentas compartidas con separación por configuración.', c2_d:'La propuesta no detalla la estrategia de separación de ambientes más allá de mencionar entornos de desarrollo y QA.' },
+  { feat:'CI/CD automatizado', cat:'arquitectura',
+    om: YES('GitHub Actions + CVE gate ECR'), vx: YES('Git, GitLab, CI/CD'), c2: PAR('Mencionado, sin detalle'),
+    om_d:'GitHub Actions para Drupal y NuxtJS. Pipeline bloqueante: si imagen Docker tiene CVE CRITICAL o HIGH sin remediar, el deploy no procede. ECR Enhanced Scanning (AWS Inspector) activo con análisis continuo de CVEs. Branch protection rules y pre-commit hooks (git-secrets).', vx_d:'Git y GitLab para control de versiones. CI/CD mencionado en la metodología con despliegue automatizado. SonarQube para análisis estático de código (SAST). No detalla CVE gate en imágenes Docker.', c2_d:'CI/CD mencionado en la propuesta pero sin documentar el pipeline detallado, herramientas específicas ni controles de calidad de imágenes.' },
+  { feat:'Migración de contenidos', cat:'arquitectura',
+    om: YES('Drupal Migrate API + ETL + redirecciones 301'), vx: YES('Scripts ETL + carga masiva CMS'), c2: YES('Migración estructurada'),
+    om_d:'Proceso: crawler completo WordPress → Export XML/SQL → Drupal Migrate API → validación de integridad. Migración de páginas, noticias, productos, imágenes a S3, documentos PDF a S3, metadatos SEO. Tabla de redirecciones 301 completa. Validación WCAG 2.1 AA post-migración.', vx_d:'Migración mediante scripts ETL y cargas masivas en el nuevo CMS. Correlación entre URLs actuales y nuevas (o redirecciones). Gestión de landing pages con plantillas dinámicas y parámetros configurables.', c2_d:'Migración estructurada según mapa de sitio. Validación de integridad. Sin el nivel de detalle técnico del proceso de migración que presenta OM Technology.' },
+
+  // SEGURIDAD
+  { section: 'Seguridad y cumplimiento normativo', cat: 'seguridad' },
+  { feat:'OWASP ASVS 5.0', cat:'seguridad',
+    om: YES('Checklist completo + 10 controles adicionales'), vx: YES('Implementado'), c2: YES('Declarado'),
+    om_d:'Checklist OWASP ASVS 5.0 completo con cobertura de: autenticación, sesiones, control de acceso, validación de inputs, criptografía, manejo de errores, logging, configuración y APIs. Adicionalmente incorporó 10 controles de seguridad adicionales identificados en análisis de brechas vs OWASP ASVS 5.0 y PCI DSS.', vx_d:'OWASP ASVS 5.0 declarado e implementado. Herramientas: SonarQube (SAST) y OWASP ZAP. Plan de aseguramiento de calidad de seguridad con pruebas de penetración y verificación contra estándares.', c2_d:'OWASP ASVS declarado en propuesta. El especialista en ciberseguridad (CISSP, NIST Consultant) tiene las credenciales para implementarlo. Sin embargo la propuesta escrita no detalla el checklist de implementación.' },
+  { feat:'Headers HTTP de seguridad', cat:'seguridad',
+    om: YES('HSTS, CSP nonce-based, X-Frame DENY, Referrer, Permissions-Policy'), vx: YES('HSTS, CSP, cabeceras completas'), c2: YES('HSTS, CSP configurados'),
+    om_d:'Response Headers Policy en CloudFront: HSTS max-age=31536000; includeSubDomains; preload. CSP estricta nonce-based para scripts inline. X-Frame-Options: DENY. X-Content-Type-Options: nosniff. Referrer-Policy: strict-origin-when-cross-origin. Permissions-Policy con restricción de geolocalización, cámara, micrófono. TLS 1.2 mínimo, TLS 1.3 preferido.', vx_d:'HSTS (RFC 6797), CSP, X-Frame-Options y demás cabeceras de seguridad implementadas. HTTPS TLS 1.2+. Configuración centralizada con módulo SecKit de Drupal (en la propuesta de OM) o equivalente.', c2_d:'Configuración de cabeceras HSTS y CSP declarada. Eliminación de cookies inseguras (HttpOnly/Secure) y corrección de servicios TLS/SSL obsoletos.' },
+  { feat:'Protección panel admin CMS', cat:'seguridad',
+    om: YES('Triple capa: WAF por IP + VPN + MFA TOTP'), vx: PAR('Autenticación federada + roles'), c2: PAR('Control de accesos en Laravel'),
+    om_d:'3 capas independientes: (1) Regla WAF que bloquea /admin y /user/login para cualquier IP fuera del rango autorizado de CLA → HTTP 403. (2) AWS Client VPN con autenticación mutua por certificados + MFA para acceso remoto. (3) Módulo TFA (Two-factor Authentication) en Drupal que exige TOTP para cualquier acceso al panel, incluso desde IPs autorizadas.', vx_d:'Autenticación federada vía AWS Cognito (SSO SAML/OIDC) para administradores. Gestión de roles y perfiles de usuario. AWS Secrets Manager para credenciales. No detalla bloqueo WAF específico para rutas de administración.', c2_d:'Control de accesos y autenticación implementado en Laravel. La propuesta no detalla restricción de rutas administrativas a nivel WAF ni VPN para acceso remoto.' },
+  { feat:'Gestión de secretos', cat:'seguridad',
+    om: YES('AWS Secrets Manager + rotación automática'), vx: YES('AWS Secrets Manager'), c2: PAR('No detallado'),
+    om_d:'Credenciales de BD, claves de API y hash salts de Drupal inyectadas en runtime desde Secrets Manager. Rotación automática habilitada: credenciales RDS rotan cada 30 días, otros secretos cada 90 días. Acceso desde ECS exclusivamente mediante IAM Role. Auditoría de accesos vía CloudTrail. Sin hardcoding en código ni imágenes Docker.', vx_d:'AWS Secrets Manager para gestión de secretos mencionado en la arquitectura. Sin detallar política de rotación automática ni frecuencia.', c2_d:'La propuesta no menciona gestión centralizada de secretos ni rotación automática de credenciales.' },
+  { feat:'Auditoría inmutable (CloudTrail WORM)', cat:'seguridad',
+    om: YES('CloudTrail + Object Lock S3 (WORM)'), vx: YES('CloudTrail + CloudWatch'), c2: PAR('No detallado'),
+    om_d:'AWS CloudTrail habilitado en todas las cuentas. Logs enviados a bucket S3 dedicado con Object Lock habilitado (WORM — Write Once Read Many). Los logs no pueden ser borrados ni modificados, ni siquiera por el administrador de la cuenta. Alertas SNS sobre eventos críticos: cambios IAM, modificaciones Security Groups, accesos a Secrets Manager. Retención 1 año (logs acceso) y 3 años (logs seguridad/auditoría). Requerido para auditorías SBS.', vx_d:'CloudWatch, CloudTrail y AWS Config para monitoreo, logging y auditoría mencionados en la arquitectura. Sin detalle específico sobre Object Lock WORM ni retención diferenciada de logs.', c2_d:'La propuesta no menciona CloudTrail ni estrategia de logs inmutables para cumplimiento SBS.' },
+  { feat:'Compliance continuo (AWS Config)', cat:'seguridad',
+    om: YES('AWS Config + reglas activas desde día 1'), vx: PAR('AWS Config mencionado'), c2: NO('No incluido'),
+    om_d:'AWS Config habilitado con reglas de compliance activas: rds-no-public, s3-no-public-read, cloudtrail-enabled, restricted-ssh, kms-key-rotation-enabled, mfa-enabled-for-iam-console-access. Dashboard de compliance disponible para auditorías SBS en cualquier momento. Genera evidencia verificable automática.', vx_d:'AWS Config mencionado en la arquitectura como parte de la capa de monitoreo y auditoría, sin detallar las reglas de compliance específicas ni el dashboard para auditorías SBS.', c2_d:'La propuesta no menciona AWS Config ni mecanismos de compliance continuo automatizado.' },
+  { feat:'Diagnóstico OWASP Top 10', cat:'seguridad',
+    om: YES('Diagnóstico detallado A01–A09'), vx: PAR('Diagnóstico general'), c2: PAR('Mención general'),
+    om_d:'Diagnóstico específico del portal actual: A01 Broken Access Control (sin gestión roles robusta), A02 Cryptographic Failures (TLS obsoleto, cookies sin flags), A05 Security Misconfiguration (headers HTTP ausentes), A06 Vulnerable Components (WordPress y plugins desactualizados), A09 Logging Failures (sin logs centralizados). Plan de mitigación por cada categoría.', vx_d:'Diagnóstico general del portal actual: WordPress monolítico con vulnerabilidades críticas, configuraciones por defecto, exposición de metadatos, falta de encabezados de seguridad, riesgo de inyección en formularios.', c2_d:'Diagnóstico general mencionando las limitaciones del WordPress actual sin mapeo explícito al OWASP Top 10.' },
+
+  // ETHICAL HACKING
+  { section: 'Ethical Hacking y pruebas de seguridad', cat: 'etica' },
+  { feat:'Ethical Hacking incluido en precio', cat:'etica',
+    om: YES('2 fases incluidas'), vx: NO('Costo adicional del cliente'), c2: YES('Incluido'),
+    om_d:'Fase 1 (Etapa Certificación): Ethical Hacking sobre ambiente staging. Metodología OWASP Testing Guide v4.2. Hallazgos con CVSS v3.1. Remediación + re-test. Fase 2 (Etapa Puesta en Producción): Ethical Hacking sobre producción + re-test aprobado. Ambas fases incluidas en el precio de S/ 102,660.', vx_d:'El Ethical Hacking se ofrece como servicio adicional a solicitud y costo del cliente. Herramientas: Burp Suite y OWASP ZAP. El TDR exige esta prueba antes del pase a producción — debe negociarse e incluirse en el contrato.', c2_d:'Ethical Hacking incluido en el alcance (Etapa de Certificación). Pruebas funcionales, de seguridad y ethical hacking declaradas. El especialista (CISSP, CISO) tiene las credenciales para ejecutarlo.' },
+  { feat:'Metodología de pruebas', cat:'etica',
+    om: YES('OWASP Testing Guide v4.2 + CVSS v3.1'), vx: PAR('OWASP ZAP + Burp Suite'), c2: PAR('No especificada en detalle'),
+    om_d:'Metodología formal: OWASP Testing Guide v4.2. Hallazgos documentados con puntuación CVSS v3.1. Evidencias incluidas. Re-test post-remediación obligatorio antes de pase a producción. Entregable E3.2: Informe de Ethical Hacking Fase 1. Entregable E4.6: Informe Ethical Hacking Fase 2.', vx_d:'Herramientas: Burp Suite y OWASP ZAP. Pruebas de caja gris. Tiempo estimado 15 días luego de finalizar pruebas de usuario. Sin metodología formal documentada (OWASP Testing Guide, CVSS).', c2_d:'Ethical Hacking declarado en la Etapa de Certificación. Especialista con certificaciones CISSP y CISO. Sin detallar la metodología específica ni el formato de entregables del informe.' },
+  { feat:'Meta SecurityScorecard', cat:'etica',
+    om: YES('≥ 90/100 — compromiso formal'), vx: PAR('Mejora declarada'), c2: PAR('Mejora declarada'),
+    om_d:'Meta explícita y formal: SecurityScorecard ≥ 90/100 (calificación "A"). Entregable E3.4: Reporte SecurityScorecard ≥ 90/100 (captura con fecha). Entregable E4.12: Evidencia final SecurityScorecard producción ≥ 90/100. El objetivo está contractualmente vinculado a la conformidad de las etapas.', vx_d:'La propuesta menciona la evaluación con SecurityScorecard en la Etapa de Certificación pero no establece un puntaje mínimo formal como condición de conformidad.', c2_d:'La propuesta menciona mejora del posicionamiento en SecurityScorecard pero sin establecer un objetivo cuantificado ni vincularlo formalmente a entregables de conformidad.' },
+
+  // METODOLOGÍA
+  { section: 'Metodología y plan de trabajo', cat: 'metodologia' },
+  { feat:'Metodología de desarrollo', cat:'metodologia',
+    om: YES('Sprints semanales + seguimiento continuo'), vx: YES('Híbrida (tradicional + ágil)'), c2: YES('Ágil declarada'),
+    om_d:'Metodología por sprints de 2 semanas. Etapa 1 (Semanas 1-3 Configuración), Etapa 2 (Semanas 4-17 Construcción y Migración con 7 sprints detallados), Etapa 3 (Semanas 18-23 Certificación), Etapa 4 (Semanas 24-26 Puesta en Producción). Seguimiento continuo con hitos claros.', vx_d:'Metodología híbrida que combina enfoque tradicional con mejores prácticas ágiles. 6 fases: Configuración, Análisis, Diseño, Construcción, Pruebas y Certificación, Despliegue y Post Implantación. Reuniones diarias de 15 minutos (stand-up).', c2_d:'Metodología ágil declarada. Definición de criterios de calidad y entrega de formatos de parametrización en la etapa de Configuración. Sin detalle del número de sprints ni duración de cada uno.' },
+  { feat:'Plazo de ejecución', cat:'metodologia',
+    om: YES('8 meses (26 semanas)'), vx: PAR('160 días hábiles (~8 meses calendario)'), c2: PAR('No especificado con detalle'),
+    om_d:'Plazo exacto de 26 semanas (6.5 meses): Configuración S1-3, Construcción y Migración S4-17, Certificación S18-23, Puesta en Producción S24-26. Dentro del límite máximo del TDR (8 meses).', vx_d:'160 días hábiles, sin incluir sábados, domingos ni feriados. Servicio en horario 09:00–18:00. Más de 8 meses en calendario real dependiendo de feriados. Ajustado al límite del TDR.', c2_d:'La propuesta no establece un cronograma detallado con fechas de inicio y fin por etapa ni número de días hábiles total.' },
+  { feat:'Entregables documentados', cat:'metodologia',
+    om: YES('+13 entregables formales por etapa'), vx: YES('+15 entregables listados'), c2: PAR('5 entregables generales'),
+    om_d:'Entregables por etapa formalizados: Etapa 1 (E1.1–E1.9), Etapa 2 (E2.1–E2.12), Etapa 3 (E3.1–E3.9), Etapa 4 (E4.1–E4.13). Total: 43 entregables específicos con nombre, descripción y vinculación a pago por hito.', vx_d:'Lista de 15+ entregables incluyendo: Cronograma, Project Charter, Kick-Off, Informes semanales, BBP, Documento de arquitectura, Especificaciones técnicas, Manuales de usuario y configuración, Pruebas UAT y seguridad, Informe de vulnerabilidades, Código fuente.', c2_d:'5 entregables generales: Portal web institucional, Migración de contenidos, Manual técnico, Manual de usuario, Documentación de arquitectura. Sin detalle por etapa ni vinculación a pagos.' },
+  { feat:'Marcha blanca', cat:'metodologia',
+    om: YES('4 semanas en staging antes de producción'), vx: YES('1 mes declarado'), c2: YES('1 mes declarado'),
+    om_d:'4 semanas de marcha blanca (operación paralela) en ambiente staging antes del pase a producción. Incluida en la Etapa de Certificación (Semanas 18-23).', vx_d:'Marcha blanca del Portal Web por 1 mes declarada en la Etapa de Certificación. Coherente con el TDR.', c2_d:'Marcha blanca de 1 mes declarada en la Etapa de Certificación. Coherente con el TDR.' },
+
+  // EQUIPO
+  { section: 'Equipo de trabajo', cat: 'equipo' },
+  { feat:'Gerente de Proyecto', cat:'equipo',
+    om: PAR('Mencionado, sin CV detallado'), vx: YES('PMP + SCRUM, detallado'), c2: YES('PMP — David Arias (UNI)'),
+    om_d:'El rol de Gerente de Proyecto está definido en la propuesta técnica, pero no se presenta CV específico del profesional asignado al cargo, a diferencia de los otros dos postores que presentaron hojas de vida documentadas.', vx_d:'Gerente de Proyecto con certificación PMP. Equipo de 13 roles: Gerente de Proyecto (PMP), Líder Técnico, Arquitecto de Solución, 2 Especialistas FrontEnd, 2 Especialistas BackEnd, Analista Funcional, UX/UI, Líder QA, 2 QA/Tester, Especialista en Seguridad.', c2_d:'David Fernando Arias Ordoñez. Ingeniero de Sistemas (UNI), certificación PMP. Más de 3 años como Gerente/Jefe de Proyectos en desarrollo e implementación de soluciones web con prácticas de seguridad OWASP.' },
+  { feat:'Especialista en Ciberseguridad', cat:'equipo',
+    om: PAR('Incluido en equipo, sin CV detallado'), vx: YES('Especialista certificado en equipo'), c2: YES('CISSP + CISO + ISO 27001 Lead'),
+    om_d:'La propuesta de OM Technology incluye un especialista en ciberseguridad en el equipo de trabajo, pero la propuesta técnica presentada no incluye el CV detallado ni las certificaciones del profesional asignado.', vx_d:'Especialista en Seguridad Informática incluido en el equipo de 13 roles. Responsable de la protección, integridad y disponibilidad de sistemas alineados a estándares internacionales. Sin CV individual detallado.', c2_d:'Jhosep Alan Valenzuela Matutti. Certificaciones: CISSP, CISO, NIST Cybersecurity Consultant, ISO/IEC 27001 Lead Implementer, ISO/IEC 27001 Lead Auditor. El perfil de ciberseguridad más acreditado del proceso.' },
+  { feat:'Especialista Cloud AWS', cat:'equipo',
+    om: PAR('Incluido en equipo, sin CV'), vx: PAR('Arquitecto en equipo'), c2: YES('Wilmer Segura — 5+ años AWS/Azure/GCP, certificado AWS'),
+    om_d:'El equipo de OM Technology incluye capacidades cloud documentadas en la arquitectura AWS propuesta, con uso de servicios avanzados como AWS Organizations, ECS Fargate, ECR Inspector y AWS Config, lo que evidencia expertise cloud, aunque no se presenta CV individual del cloud engineer.', vx_d:'Arquitecto de Solución en el equipo responsable de la infraestructura AWS. Sin CV individual detallado del profesional asignado.', c2_d:'Wilmer Enrique Segura Ramírez (Gerente General y Cloud Engineer). Bachiller en Ingeniería de Sistemas (UNI). 14+ años en desarrollo, 5+ años en AWS/Azure/GCP. Certificaciones AWS acreditadas. Experiencia en migraciones on-premise a nube y recuperación ante desastres.' },
+  { feat:'Especialista UX/UI', cat:'equipo',
+    om: PAR('No detallado como rol específico'), vx: YES('Rol UX/UI dedicado en equipo'), c2: YES('Omar Corimanya — 10+ años portales web'),
+    om_d:'La arquitectura NuxtJS + Tailwind CSS con SSG y WCAG 2.1 AA evidencia consideración de UX/UI, pero la propuesta no define un rol específico de UX/UI en el equipo ni presenta un profesional dedicado.', vx_d:'Rol UX/UI explícitamente incluido en el equipo de 13 profesionales, con responsabilidad en diseño visual y prototipado durante las fases de análisis y diseño.', c2_d:'Omar Antonio Corimanya Reyes. 10+ años en portales CMS (WordPress, Laravel, Angular, NodeJS), diseño UX/UI, PerúEduca y MINEDU. Certificaciones en diseño de sitios web accesible y e-commerce.' },
+
+  // SOPORTE
+  { section: 'Soporte, SLA y mantenimiento', cat: 'soporte' },
+  { feat:'Período de soporte post-producción', cat:'soporte',
+    om: YES('12 meses bolsa de horas'), vx: PAR('6 meses garantía'), c2: YES('6 meses, 20h/mes'),
+    om_d:'Soporte y mantenimiento por 12 meses mediante modelo de bolsa de horas acordada mensualmente entre CLA y OM Technology. Incluye atención de incidentes según SLA, actualizaciones de seguridad Drupal/módulos/NuxtJS, rotación de secretos y revisión mensual de métricas y logs.', vx_d:'Período de garantía de 6 meses post puesta en producción. Soporte correctivo sin costo para defectos del desarrollo. Finalizado el período, soporte y mantenimiento bajo acuerdo adicional de mantenimiento correctivo y/o evolutivo.', c2_d:'Soporte técnico por 6 meses con un máximo de 20 horas al mes. Atención de lunes a viernes 08:30–17:30. Incluye atención de incidencias, soporte correctivo, asistencia remota y coordinación con la entidad.' },
+  { feat:'SLA por nivel de incidencia', cat:'soporte',
+    om: YES('Crítico: 4h / Alto: 8h / Medio: 24h / Bajo: 48h'), vx: YES('Crítico: 4h / Alto: 8h / Medio: 12h / Bajo: 16h'), c2: YES('Crítico: 4h / Alto: 8h / Medio: 24h / Bajo: 48h'),
+    om_d:'SLA documentado formalmente. Crítico (indisponibilidad total): respuesta 60 min / solución 4h. Alto (reducción significativa): 90 min / 8h. Medio (intermitencia): 120 min / 12h. Bajo (alertas sin interrupción): 180 min / 16h. Horario: lunes a viernes 9:00–18:00.', vx_d:'SLA documentado por niveles. Crítico: respuesta 60 min / solución 4h. Alto: 90 min / 8h. Medio: 120 min / 12h. Bajo: 180 min / 16h. Mismas condiciones que OM Technology. Canal: soporterobot@valtx.pe', c2_d:'SLA documentado. Crítico: respuesta ≤ 1h / solución ≤ 4h. Alto: ≤ 2h / ≤ 8h. Medio: ≤ 4h / ≤ 24h. Bajo: ≤ 8h / ≤ 48h. Modelo de atención por niveles L1/L2/L3 (mesa de ayuda, soporte técnico, especialistas). Sistema de tickets.' },
+  { feat:'Responsable operativo designado', cat:'soporte',
+    om: PAR('No especificado como rol formal'), vx: PAR('Gestor de Proyecto'), c2: YES('Responsable Operativo del Servicio'),
+    om_d:'La propuesta de OM Technology no designa formalmente un Responsable Operativo del Servicio como punto de contacto único durante el soporte. Este aspecto debe ser aclarado y formalizado en el contrato.', vx_d:'El Gestor de Proyecto actúa como coordinador entre el proveedor y los equipos internos durante la implementación. En el período de soporte no se especifica un responsable operativo dedicado.', c2_d:'2Cloud define explícitamente el rol de Responsable Operativo del Servicio con funciones: supervisar la prestación, coordinar atención de incidencias, monitorear SLAs, elaborar reportes y gestionar mejora continua.' },
+  { feat:'Reportes del servicio', cat:'soporte',
+    om: YES('Informes mensuales de avance'), vx: YES('Informes semanales + mensuales'), c2: YES('Reportes periódicos de desempeño'),
+    om_d:'Informes de avance mensuales con: hitos, riesgos, issues y próximos pasos. Comité de Proyecto CLA–Proveedor con reuniones quincenales. Reuniones internas semanales del equipo técnico. Matriz RACI por entregable.', vx_d:'Informes de avance semanales durante el proyecto + informes mensuales. Reuniones de seguimiento con actas. Evaluación del funcionamiento post-lanzamiento. Documentación e Informe de Cierre al final del proyecto.', c2_d:'Reportes periódicos incluyendo: número de incidencias registradas y atendidas, tiempos de respuesta y solución, cumplimiento de SLA, incidencias recurrentes y recomendaciones de mejora.' },
+
+  // ECONÓMICO
+  { section: 'Propuesta económica y condiciones', cat: 'economico' },
+  { feat:'Monto total ofertado', cat:'economico',
+    om: YES('S/ 102,660 — menor precio'), vx: NO('S/ 559,454 — mayor precio'), c2: PAR('S/ 155,000 — precio intermedio'),
+    om_d:'S/ 102,660.00 (Ciento dos mil seiscientos sesenta y 00/100 Soles). Precio global único que incluye todos los tributos, seguros, transportes, inspecciones, pruebas y costos laborales. Es el precio más competitivo del proceso y simultáneamente la propuesta técnica mejor evaluada.', vx_d:'S/ 559,453.66. El precio más alto del proceso — 5.45 veces el precio de OM Technology. Incluye estructura de pagos por hitos alineada al TDR, Carta Fianza (S/ 1,395) y garantía formal de 6 meses con SLA documentado.', c2_d:'S/ 155,000.00. Precio intermedio con el desglose más detallado: Gestión S/ 20k, Cloud S/ 20k, Seguridad S/ 18k, FrontEnd S/ 35k, BackEnd S/ 35k, Migración S/ 10k, QA S/ 9k, Despliegue S/ 8k.' },
+  { feat:'Desglose por etapas (hitos)', cat:'economico',
+    om: NO('Precio global sin desglose'), vx: YES('4 hitos alineados al TDR (20/20/20/40%)'), c2: PAR('8 componentes por servicio'),
+    om_d:'La propuesta económica presenta un precio global único de S/ 102,660 sin desglose por las etapas del TDR. Pendiente solicitar al proveedor la distribución por hitos (Configuración 20%, Construcción 20%, Certificación 20%, Puesta en Producción 40%) previo a la firma del contrato.', vx_d:'Estructura perfectamente alineada al TDR: Hito 1 Configuración S/ 111,611.70 (20%), Hito 2 Construcción y Migración S/ 111,611.70 (20%), Hito 3 Certificación S/ 111,611.70 (20%), Hito 4 Puesta en Producción S/ 223,223.40 (40%).', c2_d:'Desglose por 8 componentes del proyecto (no por hitos del TDR). Permite verificar cobertura por área pero no se mapea directamente al esquema de pagos por etapas del TDR. Requiere alineación.' },
+  { feat:'Carta Fianza de Fiel Cumplimiento', cat:'economico',
+    om: PAR('No especificada — pendiente confirmar'), vx: YES('Incluida — S/ 1,395'), c2: NO('No especificada'),
+    om_d:'La propuesta económica de OM Technology no menciona Carta Fianza. Debe ser requerida como condición previa a la firma del contrato, conforme a las bases del proceso de selección.', vx_d:'Carta Fianza incluida explícitamente en la propuesta económica (Ítem 5: S/ 1,395.00). VALTX es el único postor que la incluyó en su oferta económica sin necesidad de requerimiento adicional.', c2_d:'La propuesta económica no menciona Carta Fianza de Fiel Cumplimiento. Debe ser requerida formalmente previo a la adjudicación.' },
+  { feat:'Extensibilidad futura (APIs)', cat:'economico',
+    om: YES('App móvil, kioscos, portal autoservicio sin rediseño'), vx: YES('APIs documentadas para integraciones'), c2: PAR('APIs REST documentadas'),
+    om_d:'La arquitectura headless Drupal + NuxtJS permite que la misma API JSON:API sirva futuros canales sin cambios en el backend: app móvil (React Native/Flutter), kioscos digitales, portal de autoservicio con OAuth 2.0, integración con CRM/ERP. Infraestructura preparada sin costo adicional de rediseño.', vx_d:'APIs documentadas para integraciones futuras. Arquitectura modular que permite incorporar nuevos módulos o canales digitales sin rediseñar la arquitectura base. Escalabilidad horizontal y vertical contemplada.', c2_d:'APIs REST documentadas para futuras integraciones. Arquitectura cloud escalable horizontal y verticalmente. Sin el nivel de detalle sobre canales futuros específicos que presenta OM Technology.' },
+];
+
+function chip(html) { return html; }
+
+function buildTable() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  rows.forEach((r, idx) => {
+    if (r.section !== undefined) {
+      const tr = document.createElement('tr');
+      tr.className = 'section-row';
+      tr.dataset.cat = r.cat;
+      tr.innerHTML = `<td colspan="5">${r.section}</td>`;
+      tbody.appendChild(tr);
+    } else {
+      const tr = document.createElement('tr');
+      tr.className = 'data-row';
+      tr.dataset.cat = r.cat;
+      tr.dataset.idx = idx;
+      tr.innerHTML = `
+        <td class="cat-cell"></td>
+        <td class="feat-cell">${r.feat} <span class="arrow" id="arr-${idx}">›</span></td>
+        <td class="val-cell winner">${r.om}</td>
+        <td class="val-cell">${r.vx}</td>
+        <td class="val-cell">${r.c2}</td>
+      `;
+      tr.addEventListener('click', () => toggleExpand(idx));
+      tbody.appendChild(tr);
+
+      const exp = document.createElement('tr');
+      exp.className = 'expand-row';
+      exp.id = `exp-${idx}`;
+      exp.dataset.cat = r.cat;
+      exp.innerHTML = `<td colspan="5">
+        <div class="expand-inner">
+          <div class="expand-col"><strong>OM Technology ★</strong>${r.om_d}</div>
+          <div class="expand-col"><strong>VALTX</strong>${r.vx_d}</div>
+          <div class="expand-col"><strong>2Cloud</strong>${r.c2_d}</div>
+        </div>
+      </td>`;
+      tbody.appendChild(exp);
+    }
+  });
+}
+
+function toggleExpand(idx) {
+  const exp = document.getElementById(`exp-${idx}`);
+  const arr = document.getElementById(`arr-${idx}`);
+  const isOpen = exp.classList.contains('open');
+  document.querySelectorAll('.expand-row.open').forEach(e => e.classList.remove('open'));
+  document.querySelectorAll('.arrow.open').forEach(a => a.classList.remove('open'));
+  if (!isOpen) { exp.classList.add('open'); arr.classList.add('open'); }
+}
+
+let currentCat = 'all';
+function filterCat(cat) {
+  currentCat = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('[data-cat]').forEach(el => {
+    el.classList.toggle('hidden', cat !== 'all' && el.dataset.cat !== cat);
+  });
+  document.querySelectorAll('.expand-row.open').forEach(e => e.classList.remove('open'));
+  document.querySelectorAll('.arrow.open').forEach(a => a.classList.remove('open'));
+}
+
+buildTable();
+</script>
